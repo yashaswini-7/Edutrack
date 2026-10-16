@@ -296,13 +296,25 @@ public class EduTrackMain {
         String opt = scanner.nextLine().trim();
 
         if (opt.equals("1")) {
-            String s1 = "kitten";
-            String s2 = "sitting";
+            System.out.print("Enter first string (default 'kitten'): ");
+            String s1 = scanner.nextLine().trim();
+            if (s1.isEmpty()) s1 = "kitten";
+
+            System.out.print("Enter second string (default 'sitting'): ");
+            String s2 = scanner.nextLine().trim();
+            if (s2.isEmpty()) s2 = "sitting";
+
             int lev = Module3DPEngine.levenshteinDistance(s1, s2);
-            int dam = Module3DPEngine.damerauLevenshteinDistance("ca", "ac");
-            System.out.println("\n>> Levenshtein Edit Distance (\"" + s1 + "\" <-> \"" + s2 + "\"): " + lev);
-            System.out.println(">> Damerau-Levenshtein with Adjacent Transposition (\"ca\" <-> \"ac\"): " + dam);
-            System.out.println("   Note: Classic Levenshtein requires 2 ops (del+ins); Damerau requires 1 op.");
+            int dam = Module3DPEngine.damerauLevenshteinDistance(s1, s2);
+            double sim = Module3DPEngine.calculateSimilarity(s1, s2);
+
+            System.out.println("\n>> Edit Distance Comparison: \"" + s1 + "\" <-> \"" + s2 + "\"");
+            System.out.println("   Classic Levenshtein Distance: " + lev);
+            System.out.println("   Damerau-Levenshtein (with Adjacent Transposition): " + dam);
+            System.out.printf("   Overall Profile Similarity: %.2f%%\n", sim);
+            if (lev != dam) {
+                System.out.println("   [!] Transposition Benefit: Damerau saves " + (lev - dam) + " operation(s) by swapping adjacent characters directly!");
+            }
         } else if (opt.equals("2")) {
             String a = "ACGTTCGAA";
             String b = "AGCTGCA";
