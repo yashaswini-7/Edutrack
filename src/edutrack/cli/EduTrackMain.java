@@ -230,8 +230,13 @@ public class EduTrackMain {
             System.out.printf("  4. Rabin-Karp   %-7d  (hash roll)   %-10.2f  %.2fx\n", resRk.size(), (t4 - t3) / 1000.0, baseTime / Math.max(1, (t4 - t3) / 1000.0));
             System.out.println("================================================================================");
         } else if (opt.equals("3")) {
-            String testText = "services_teacher_services_health_course_services_teacher_course";
-            String testPat = "services";
+            System.out.print("Enter text for hash collision test (press Enter for default): ");
+            String inText = scanner.nextLine().trim();
+            String testText = inText.isEmpty() ? "services_teacher_services_health_course_services_teacher_course" : inText;
+            System.out.print("Enter pattern (default 'services'): ");
+            String inPat = scanner.nextLine().trim();
+            String testPat = inPat.isEmpty() ? "services" : inPat;
+
             CustomIntArray small = Module2StringEngine.searchRabinKarpSmallMod(testText, testPat);
             int smallSpurious = Module2StringEngine.lastSpuriousCollisions;
 
@@ -243,12 +248,16 @@ public class EduTrackMain {
             System.out.println("   Double Hash (10^9+7, 10^9+9): Matches = " + dbl.size() + ", Spurious Collisions = " + dblSpurious);
             System.out.println("   Conclusion: Double-hashing mathematically eliminates false positives before character verification.");
         } else if (opt.equals("4")) {
-            String[] keywords = {"teacher", "services", "health", "course"};
+            System.out.print("Enter comma-separated keywords to search simultaneously (default 'teacher, services, health, course'): ");
+            String kwLine = scanner.nextLine().trim();
+            String[] keywords = parseCsvStrings(kwLine, new String[]{"teacher", "services", "health", "course"});
+
             Module2StringEngine.AhoCorasick ac = new Module2StringEngine.AhoCorasick(keywords);
             long t0 = System.nanoTime();
             CustomMatchList acMatches = ac.searchAll(studentDataCorpus);
             long t1 = System.nanoTime();
-            System.out.println("\n>> Aho-Corasick Multi-Pattern Search for: [teacher, services, health, course]");
+            System.out.print("\n>> Aho-Corasick Multi-Pattern Search for: [");
+            for (int i = 0; i < keywords.length; i++) System.out.print(keywords[i] + (i + 1 < keywords.length ? ", " : "]\n"));
             System.out.println("   Total Keyword Occurrences in Corpus: " + acMatches.size());
             System.out.printf("   Execution Time: %.2f us (Linear in Text Length)\n", (t1 - t0) / 1000.0);
         } else if (opt.equals("5")) {
@@ -267,10 +276,19 @@ public class EduTrackMain {
             }
         } else if (opt.equals("6")) {
             if (students.length >= 2) {
-                String p1 = students[0].profile;
-                String p2 = students[1].profile;
+                System.out.print("Enter first Student ID (default S001): ");
+                String id1 = scanner.nextLine().trim();
+                System.out.print("Enter second Student ID (default S002): ");
+                String id2 = scanner.nextLine().trim();
+                int idx1 = id1.isEmpty() ? 0 : SortSearch.binarySearch(students, id1.toUpperCase());
+                int idx2 = id2.isEmpty() ? 1 : SortSearch.binarySearch(students, id2.toUpperCase());
+                if (idx1 < 0) idx1 = 0;
+                if (idx2 < 0) idx2 = 1;
+
+                String p1 = students[idx1].profile;
+                String p2 = students[idx2].profile;
                 String lcs = Module2StringEngine.longestCommonSubstring(p1, p2);
-                System.out.println("\n>> Longest Common Profile Attribute Substring (S001 vs S002):");
+                System.out.println("\n>> Longest Common Profile Attribute Substring (" + students[idx1].id + " vs " + students[idx2].id + "):");
                 System.out.println("   Shared Substring: \"" + lcs + "\" (Length: " + lcs.length() + ")");
             } else {
                 System.out.println("Need at least 2 loaded students to compare profiles.");
@@ -316,35 +334,52 @@ public class EduTrackMain {
                 System.out.println("   [!] Transposition Benefit: Damerau saves " + (lev - dam) + " operation(s) by swapping adjacent characters directly!");
             }
         } else if (opt.equals("2")) {
-            String a = "ACGTTCGAA";
-            String b = "AGCTGCA";
+            System.out.print("Enter first sequence (default 'ACGTTCGAA'): ");
+            String a = scanner.nextLine().trim();
+            if (a.isEmpty()) a = "ACGTTCGAA";
+            System.out.print("Enter second sequence (default 'AGCTGCA'): ");
+            String b = scanner.nextLine().trim();
+            if (b.isEmpty()) b = "AGCTGCA";
+
             Module3DPEngine.AlignmentResult res = Module3DPEngine.needlemanWunsch(a, b, 2, -1, -2);
             System.out.println("\n>> Needleman-Wunsch Global Alignment Result:");
             System.out.println("   Aligned Sequence 1: " + res.alignedS1);
             System.out.println("   Aligned Sequence 2: " + res.alignedS2);
             System.out.println("   Global Alignment Score: " + res.score);
         } else if (opt.equals("3")) {
-            String a = "HEAGAWGHEE";
-            String b = "PAWHEAE";
+            System.out.print("Enter first sequence (default 'HEAGAWGHEE'): ");
+            String a = scanner.nextLine().trim();
+            if (a.isEmpty()) a = "HEAGAWGHEE";
+            System.out.print("Enter second sequence (default 'PAWHEAE'): ");
+            String b = scanner.nextLine().trim();
+            if (b.isEmpty()) b = "PAWHEAE";
+
             Module3DPEngine.AlignmentResult res = Module3DPEngine.smithWaterman(a, b, 2, -1, -2);
             System.out.println("\n>> Smith-Waterman Local Alignment Result:");
             System.out.println("   Local Motif 1: " + res.alignedS1);
             System.out.println("   Local Motif 2: " + res.alignedS2);
             System.out.println("   Maximum Local Match Score: " + res.score);
         } else if (opt.equals("4")) {
-            int[] dims = {10, 30, 5, 60};
+            System.out.print("Enter comma-separated matrix dimensions (default '10, 30, 5, 60'): ");
+            int[] dims = parseCsvInts(scanner.nextLine().trim(), new int[]{10, 30, 5, 60});
             Module3DPEngine.MatrixChainResult res = Module3DPEngine.matrixChainOrder(dims);
-            System.out.println("\n>> Matrix-Chain Multiplication for Chain Dimensions [10x30, 30x5, 5x60]:");
+            System.out.print("\n>> Matrix-Chain Multiplication for Chain Dimensions [");
+            for (int i = 0; i < dims.length; i++) System.out.print(dims[i] + (i + 1 < dims.length ? ", " : "]:\n"));
             System.out.println("   Minimum Scalar Multiplications: " + res.minMultiplications);
             System.out.println("   Optimal Parenthesization Order: " + res.parenthesization);
         } else if (opt.equals("5")) {
-            int[] freq = {34, 8, 50};
+            System.out.print("Enter search frequencies for keys (default '34, 8, 50'): ");
+            int[] freq = parseCsvInts(scanner.nextLine().trim(), new int[]{34, 8, 50});
             Module3DPEngine.OBSTResult res = Module3DPEngine.optimalBST(freq);
-            System.out.println("\n>> Optimal Binary Search Tree for Search Frequencies [34, 8, 50]:");
+            System.out.print("\n>> Optimal Binary Search Tree for Search Frequencies [");
+            for (int i = 0; i < freq.length; i++) System.out.print(freq[i] + (i + 1 < freq.length ? ", " : "]:\n"));
             System.out.println("   Minimum Expected Search Cost: " + res.minCost);
             System.out.println("   Optimal BST Tree Structure:   " + res.treeStructure);
         } else if (opt.equals("6")) {
-            int[][] dist = {
+            System.out.print("Enter number of campus buildings to tour [3 to 6] (default 6): ");
+            int k = parseIntOrDefault(scanner.nextLine().trim(), 6);
+            if (k < 3 || k > 6) k = 6;
+            int[][] fullDist = {
                 {0, 20, 42, 25, 30, 15},
                 {20, 0, 30, 34, 18, 22},
                 {42, 30, 0, 10, 28, 36},
@@ -352,7 +387,10 @@ public class EduTrackMain {
                 {30, 18, 28, 14, 0, 12},
                 {15, 22, 36, 20, 12, 0}
             };
-            System.out.println("\n>> Solving 6-Campus Inspection Tour via TSP Bitmask DP O(2^N * N^2):");
+            int[][] dist = new int[k][k];
+            for (int r = 0; r < k; r++) for (int c = 0; c < k; c++) dist[r][c] = fullDist[r][c];
+
+            System.out.println("\n>> Solving " + k + "-Campus Inspection Tour via TSP Bitmask DP O(2^N * N^2):");
             Module3DPEngine.TSPResult res = Module3DPEngine.solveTSP(dist);
             System.out.println("   Minimum Tour Cost: " + res.minCost);
             System.out.print("   Optimal Tour Path: ");
@@ -390,11 +428,18 @@ public class EduTrackMain {
                 System.out.print(res.rerootedSubtreeSums[i] + (i + 1 < res.rerootedSubtreeSums.length ? ", " : "]\n"));
             }
         } else if (opt.equals("9")) {
-            int[] f = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16};
-            int[] sos = Module3DPEngine.sumOverSubsets(f, 4);
-            System.out.println("\n>> SOS DP (Sum Over Subsets) for 4-bit Elective Bundle:");
-            System.out.println("   SOS DP [1111_2] = " + sos[15] + " (Sum of all 16 submasks)");
-            System.out.println("   SOS DP [0101_2] = " + sos[5] + " (F[0000]+F[0001]+F[0100]+F[0101])");
+            System.out.print("Enter number of elective bits [2 to 5] (default 4): ");
+            int bits = parseIntOrDefault(scanner.nextLine().trim(), 4);
+            if (bits < 2 || bits > 5) bits = 4;
+            int total = 1 << bits;
+            int[] f = new int[total];
+            for (int i = 0; i < total; i++) f[i] = i + 1;
+            int[] sos = Module3DPEngine.sumOverSubsets(f, bits);
+            System.out.println("\n>> SOS DP (Sum Over Subsets) for " + bits + "-bit Elective Bundle:");
+            System.out.println("   SOS DP [Full Mask " + (total - 1) + "] = " + sos[total - 1] + " (Sum of all " + total + " submasks)");
+            if (bits >= 4) {
+                System.out.println("   SOS DP [0101_2] = " + sos[5] + " (F[0000]+F[0001]+F[0100]+F[0101])");
+            }
         } else if (opt.equals("10")) {
             System.out.println("\n" + Module3DPEngine.explainWhenDPIsWrong());
         }
@@ -421,9 +466,16 @@ public class EduTrackMain {
         };
 
         if (opt.equals("1")) {
-            Module4FlowEngine.FlowResult ff = Module4FlowEngine.fordFulkerson(sampleCap, 0, 5);
-            Module4FlowEngine.FlowResult ek = Module4FlowEngine.edmondsKarp(sampleCap, 0, 5);
-            Module4FlowEngine.FlowResult dn = Module4FlowEngine.dinicMaxFlow(sampleCap, 0, 5);
+            System.out.print("Enter Source node index [0-5] (default 0): ");
+            int s = parseIntOrDefault(scanner.nextLine().trim(), 0);
+            System.out.print("Enter Sink node index [0-5] (default 5): ");
+            int t = parseIntOrDefault(scanner.nextLine().trim(), 5);
+            if (s < 0 || s > 5) s = 0;
+            if (t < 0 || t > 5 || t == s) t = 5;
+
+            Module4FlowEngine.FlowResult ff = Module4FlowEngine.fordFulkerson(sampleCap, s, t);
+            Module4FlowEngine.FlowResult ek = Module4FlowEngine.edmondsKarp(sampleCap, s, t);
+            Module4FlowEngine.FlowResult dn = Module4FlowEngine.dinicMaxFlow(sampleCap, s, t);
 
             System.out.println("\n================================================================================");
             System.out.println("  Flow Algorithm           Complexity       Max Flow  Augmenting Steps");
@@ -433,8 +485,15 @@ public class EduTrackMain {
             System.out.printf("  3. Dinic's Algorithm      O(V^2 * E)       %-8d  %-10d\n", dn.maxFlow, dn.augmentingPathsCount);
             System.out.println("================================================================================");
         } else if (opt.equals("2")) {
-            Module4FlowEngine.FlowResult res = Module4FlowEngine.dinicMaxFlow(sampleCap, 0, 5);
-            System.out.println("\n>> Min-Cut Dual Analysis on 6-Node Resource Network:");
+            System.out.print("Enter Source node index [0-5] (default 0): ");
+            int s = parseIntOrDefault(scanner.nextLine().trim(), 0);
+            System.out.print("Enter Sink node index [0-5] (default 5): ");
+            int t = parseIntOrDefault(scanner.nextLine().trim(), 5);
+            if (s < 0 || s > 5) s = 0;
+            if (t < 0 || t > 5 || t == s) t = 5;
+
+            Module4FlowEngine.FlowResult res = Module4FlowEngine.dinicMaxFlow(sampleCap, s, t);
+            System.out.println("\n>> Min-Cut Dual Analysis on 6-Node Resource Network (Source " + s + " -> Sink " + t + "):");
             System.out.println("   Maximum Flow:         " + res.maxFlow + " units");
             System.out.println("   Minimum Cut Capacity: " + res.minCutCapacity + " units");
             System.out.println("   Source Partition S:   " + res.sourcePartition);
@@ -448,7 +507,7 @@ public class EduTrackMain {
                 {true, false, false, true}
             };
             Module4FlowEngine.MatchingResult match = Module4FlowEngine.solveBipartiteMatching(compat, 4, 4);
-            System.out.println("\n>> Student-to-Mentor Bipartite Matching:");
+            System.out.println("\n>> Student-to-Mentor Bipartite Matching (4 Students <-> 4 Mentors):");
             System.out.println("   Total Matched Pairs: " + match.matchCount + " of 4");
             for (int i = 0; i < match.matchedPairs.length; i++) {
                 System.out.println("   Student S" + (match.matchedPairs[i][0] + 1) + " ---> Mentor M" + (match.matchedPairs[i][1] + 1));
@@ -462,13 +521,23 @@ public class EduTrackMain {
             net.addEdge(1, 3, 2, 3);
             net.addEdge(2, 3, 3, 1);
 
-            Module4FlowEngine.MCMFResult mcmf = Module4FlowEngine.solveMinCostMaxFlow(net, 0, 3);
-            System.out.println("\n>> Min-Cost Max-Flow (MCMF) Result:");
+            System.out.print("Enter source node [0-3] (default 0): ");
+            int s = parseIntOrDefault(scanner.nextLine().trim(), 0);
+            System.out.print("Enter sink node [0-3] (default 3): ");
+            int t = parseIntOrDefault(scanner.nextLine().trim(), 3);
+            if (s < 0 || s > 3) s = 0;
+            if (t < 0 || t > 3 || t == s) t = 3;
+
+            Module4FlowEngine.MCMFResult mcmf = Module4FlowEngine.solveMinCostMaxFlow(net, s, t);
+            System.out.println("\n>> Min-Cost Max-Flow (MCMF) Result (Source " + s + " -> Sink " + t + "):");
             System.out.println("   Maximum Achieved Flow: " + mcmf.maxFlow + " units");
             System.out.println("   Minimum Total Cost:    " + mcmf.minCost + " currency units");
         } else if (opt.equals("5")) {
-            int[] rewards = {100, 200, 150};
-            int[] prereqCosts = {80, 120};
+            System.out.print("Enter rewards for 3 projects (default '100, 200, 150'): ");
+            int[] rewards = parseCsvInts(scanner.nextLine().trim(), new int[]{100, 200, 150});
+            System.out.print("Enter costs for 2 prerequisites (default '80, 120'): ");
+            int[] prereqCosts = parseCsvInts(scanner.nextLine().trim(), new int[]{80, 120});
+
             int[][] deps = {
                 {0, 0}, 
                 {1, 0}, 
@@ -477,13 +546,17 @@ public class EduTrackMain {
             };
             Module4FlowEngine.ProjectSelectionResult ps = Module4FlowEngine.solveProjectSelection(rewards, prereqCosts, deps);
             System.out.println("\n>> Project Selection as Min-Cut (Closure Problem):");
-            System.out.println("   Projects: P0(reward 100), P1(reward 200), P2(reward 150)");
-            System.out.println("   Prerequisites: R0(cost 80), R1(cost 120)");
+            System.out.print("   Projects Rewards: [");
+            for (int i = 0; i < rewards.length; i++) System.out.print(rewards[i] + (i + 1 < rewards.length ? ", " : "]\n"));
+            System.out.print("   Prerequisite Costs: [");
+            for (int i = 0; i < prereqCosts.length; i++) System.out.print(prereqCosts[i] + (i + 1 < prereqCosts.length ? ", " : "]\n"));
             System.out.println("   Selected Optimal Project Indices: " + ps.selectedProjects);
-            System.out.println("   Net Maximum Educational Profit:  " + ps.netMaximumReward);
+            System.out.println("   Net Maximum Educational Profit:   " + ps.netMaximumReward);
         } else if (opt.equals("6")) {
-            int[] tasks = {4, 6, 5};
-            int[] deadlines = {2, 3, 2};
+            System.out.print("Enter study hours for 3 tasks (default '4, 6, 5'): ");
+            int[] tasks = parseCsvInts(scanner.nextLine().trim(), new int[]{4, 6, 5});
+            System.out.print("Enter deadlines in days for 3 tasks (default '2, 3, 2'): ");
+            int[] deadlines = parseCsvInts(scanner.nextLine().trim(), new int[]{2, 3, 2});
             int[] dayCaps = {5, 5, 5};
 
             Module4FlowEngine.SchedulingResult sc = Module4FlowEngine.scheduleTasksWithDeadlines(tasks, deadlines, dayCaps);
@@ -511,17 +584,21 @@ public class EduTrackMain {
                 {true, true, false, true},
                 {false, true, true, false}
             };
+            System.out.print("Enter budget k for Vertex Cover witness verification (default 2): ");
+            int kBud = parseIntOrDefault(scanner.nextLine().trim(), 2);
             int[] goodWitness = {1, 2};
             int[] badWitness = {0, 3};
 
             System.out.println("\n>> Polynomial-Time Certificate Verification on 4-Node Exam Conflict Graph:");
-            System.out.println("   Testing Witness {1, 2} with k=2: " + Module5NPEngine.verifyVertexCover(graph, goodWitness, 2));
-            System.out.println("   Testing Witness {0, 3} with k=2: " + Module5NPEngine.verifyVertexCover(graph, badWitness, 2));
+            System.out.println("   Testing Witness {1, 2} with k=" + kBud + ": " + Module5NPEngine.verifyVertexCover(graph, goodWitness, kBud));
+            System.out.println("   Testing Witness {0, 3} with k=" + kBud + ": " + Module5NPEngine.verifyVertexCover(graph, badWitness, kBud));
 
             int[] weights = {12, 5, 8, 17, 3};
+            System.out.print("\nEnter target sum for Subset-Sum certificate verification (default 16): ");
+            int targetSum = parseIntOrDefault(scanner.nextLine().trim(), 16);
             int[] subsetWitness = {1, 2, 4};
-            System.out.println("\n>> Subset-Sum Certificate Verification (Target = 16):");
-            System.out.println("   Testing Witness indices [1, 2, 4]: " + Module5NPEngine.verifySubsetSum(weights, subsetWitness, 16));
+            System.out.println("   Available weights: [12, 5, 8, 17, 3]");
+            System.out.println("   Testing Witness indices [1, 2, 4] (weights: 5+8+3): " + Module5NPEngine.verifySubsetSum(weights, subsetWitness, targetSum));
 
             int[][] clauses = {
                 {1, -2, 3},
@@ -532,13 +609,19 @@ public class EduTrackMain {
             System.out.println("\n>> 3-SAT Certificate Verification (3 Clauses):");
             System.out.println("   Testing Truth Assignment [x1=T, x2=F, x3=T]: " + Module5NPEngine.verify3SAT(clauses, assign));
         } else if (opt.equals("2")) {
-            int[][] sample3Sat = {
+            System.out.print("Enter number of 3-SAT clauses to reduce [1 to 3] (default 2): ");
+            int numC = parseIntOrDefault(scanner.nextLine().trim(), 2);
+            if (numC < 1 || numC > 3) numC = 2;
+            int[][] fullClauses = {
                 {1, 2, 3},
-                {-1, -2, 3}
+                {-1, -2, 3},
+                {1, -2, -3}
             };
+            int[][] sample3Sat = new int[numC][3];
+            for (int i = 0; i < numC; i++) sample3Sat[i] = fullClauses[i];
+
             Module5NPEngine.SatToCliqueReduction red = Module5NPEngine.reduce3SatToClique(sample3Sat);
-            System.out.println("\n>> 3-SAT -> CLIQUE Polynomial Reduction:");
-            System.out.println("   Formula: (x1 v x2 v x3) ^ (~x1 v ~x2 v x3)");
+            System.out.println("\n>> 3-SAT -> CLIQUE Polynomial Reduction (" + numC + " Clauses):");
             System.out.println("   Constructed Graph: " + red.numVertices + " vertices (3 per clause)");
             System.out.println("   Target Clique Size: " + red.targetCliqueSize + " (Formula is SAT iff graph has " + red.targetCliqueSize + "-clique)");
 
@@ -564,12 +647,15 @@ public class EduTrackMain {
             System.out.println("   Selected Proctor Node Indices: " + approxVC.vertexCover);
             System.out.println("   Ratio Guarantee: |C| <= 2 * OPT (Proved because any valid cover requires >= |M| vertices).");
 
-            int[] values = {60, 100, 120};
-            int[] weights = {10, 20, 30};
-            int budget = 50;
+            System.out.print("\nEnter Knapsack capacity budget (default 50): ");
+            int budget = parseIntOrDefault(scanner.nextLine().trim(), 50);
+            System.out.print("Enter project values (default '60, 100, 120'): ");
+            int[] values = parseCsvInts(scanner.nextLine().trim(), new int[]{60, 100, 120});
+            System.out.print("Enter project weights (default '10, 20, 30'): ");
+            int[] weights = parseCsvInts(scanner.nextLine().trim(), new int[]{10, 20, 30});
+
             Module5NPEngine.ApproxKnapsackResult approxK = Module5NPEngine.approximateKnapsack(values, weights, budget);
             System.out.println("\n>> Greedy Knapsack 0.5-OPT Approximation (Project Credit Allocation):");
-            System.out.println("   Values: [60, 100, 120], Weights: [10, 20, 30], Capacity: 50");
             System.out.println("   Selected Items: " + approxK.selectedItems);
             System.out.println("   Total Weight: " + approxK.totalWeight + " / " + budget);
             System.out.println("   Achieved Value: " + approxK.totalValue + " (Guaranteed >= 0.5 * OPT)");
@@ -580,8 +666,9 @@ public class EduTrackMain {
                 {true, true, false, true},
                 {false, true, true, false}
             };
+            System.out.print("Enter parameter budget k for exact FPT cover [1 to 4] (default 2): ");
+            int paramK = parseIntOrDefault(scanner.nextLine().trim(), 2);
             CustomIntArray fptCover = new CustomIntArray();
-            int paramK = 2;
             boolean found = Module5NPEngine.solveFPTVertexCover(graph, paramK, fptCover);
             System.out.println("\n>> Fixed-Parameter Tractable (FPT) Vertex Cover (Bounded Search Tree):");
             System.out.println("   Searching for exact cover with parameter k=" + paramK + " in O(2^k * (V+E)):");
@@ -630,7 +717,9 @@ public class EduTrackMain {
                 System.out.println("--------------------------------------------------------------------------------");
             }
         } else if (opt.equals("2")) {
-            int n = 150;
+            System.out.print("Enter number of student marks for adversary benchmark (default 150): ");
+            int n = parseIntOrDefault(scanner.nextLine().trim(), 150);
+            if (n < 10) n = 150;
             int[] sortedMarks = new int[n];
             for (int i = 0; i < n; i++) sortedMarks[i] = i * 2;
 
@@ -641,14 +730,19 @@ public class EduTrackMain {
             System.out.println("   Expected Theoretical [2*N*ln(N)]:    " + res.expectedTheoreticalComparisons + " comparisons");
             System.out.printf("   Adversary Attack Avoidance Speedup:   %.2fx fewer comparisons\n", res.adversaryDegradationRatio);
         } else if (opt.equals("3")) {
-            int n = 100;
+            System.out.print("Enter number of student IDs to hash (default 100): ");
+            int n = parseIntOrDefault(scanner.nextLine().trim(), 100);
+            System.out.print("Enter number of hash buckets (default 16): ");
+            int m = parseIntOrDefault(scanner.nextLine().trim(), 16);
+            if (n < 1) n = 100;
+            if (m < 2) m = 16;
             int[] studentIds = new int[n];
-            for (int i = 0; i < n; i++) studentIds[i] = 1000 + i * 16;
+            for (int i = 0; i < n; i++) studentIds[i] = 1000 + i * m;
 
-            Module6RandomParallelEngine.UniversalHashResult ures = Module6RandomParallelEngine.testUniversalHashing(studentIds, 16);
-            System.out.println("\n>> 2-Universal Hashing vs Naive Modulo Hashing (16 Buckets, 100 Keys):");
+            Module6RandomParallelEngine.UniversalHashResult ures = Module6RandomParallelEngine.testUniversalHashing(studentIds, m);
+            System.out.println("\n>> 2-Universal Hashing vs Naive Modulo Hashing (" + m + " Buckets, " + n + " Keys):");
             System.out.printf("   Universal Hash Parameters: a = %d, b = %d, p = 1000000007\n", ures.paramA, ures.paramB);
-            System.out.println("   Naive Modulo (x mod 16) Max Bucket Collision:  " + ures.naiveMaxCollisions + " keys (Severe cluster)");
+            System.out.println("   Naive Modulo (x mod " + m + ") Max Bucket Collision:  " + ures.naiveMaxCollisions + " keys (Severe cluster)");
             System.out.println("   2-Universal Hash (h_a,b(x)) Max Bucket Load:   " + ures.universalMaxCollisions + " keys (Uniform spread)");
             System.out.printf("   Bucket Variance: Universal = %.2f vs Naive = %.2f\n", ures.universalVariance, ures.naiveVariance);
         } else if (opt.equals("4")) {
@@ -658,7 +752,10 @@ public class EduTrackMain {
                 streamMarks[i] = students.length > 0 ? students[i].g3() : (i % 20);
             }
 
-            int k = 5;
+            System.out.print("Enter reservoir sample capacity k (default 5): ");
+            int k = parseIntOrDefault(scanner.nextLine().trim(), 5);
+            if (k < 1) k = 5;
+
             Module6RandomParallelEngine.ReservoirResult res = Module6RandomParallelEngine.reservoirSample(streamMarks, k);
             System.out.println("\n>> Reservoir Sampling (Algorithm R) on Streaming Student Data:");
             System.out.println("   Total Stream Size Processed (N): " + res.streamTotalSize + " records");
@@ -671,8 +768,11 @@ public class EduTrackMain {
                     res.sampleCapacity, res.streamTotalSize, res.individualInclusionProbability * 100.0);
             System.out.println("   Induction Proof: At step t, item replacement probability k/t preserves exact k/N probability for all items.");
         } else if (opt.equals("5")) {
-            long workT1 = 64000;
-            long spanTinf = 120;
+            System.out.print("Enter Work T1 in total operations (default 64000): ");
+            long workT1 = parseLongOrDefault(scanner.nextLine().trim(), 64000L);
+            System.out.print("Enter Critical Path Span T_inf (default 120): ");
+            long spanTinf = parseLongOrDefault(scanner.nextLine().trim(), 120L);
+
             Module6RandomParallelEngine.BrentAnalysis ba = Module6RandomParallelEngine.analyzeBrentsTheorem(workT1, spanTinf);
 
             System.out.println("\n================================================================================");
@@ -688,9 +788,11 @@ public class EduTrackMain {
             }
             System.out.println("================================================================================");
         } else if (opt.equals("6")) {
-            int[] grades = {12, 14, 16, 10, 18, 15, 11, 13};
+            System.out.print("Enter comma-separated student grades to scan (default '12, 14, 16, 10, 18, 15, 11, 13'): ");
+            int[] grades = parseCsvInts(scanner.nextLine().trim(), new int[]{12, 14, 16, 10, 18, 15, 11, 13});
+
             Module6RandomParallelEngine.ParallelReduceResult red = Module6RandomParallelEngine.parallelTreeReduce(grades);
-            System.out.println("\n>> Parallel Tree Reduction on Student Grades [12, 14, 16, 10, 18, 15, 11, 13]:");
+            System.out.println("\n>> Parallel Tree Reduction on Student Grades:");
             System.out.println("   Total Grade Sum:  " + red.totalSum);
             System.out.printf("   Class Average:    %.2f / 20.0\n", red.average);
             System.out.println("   Tree Steps Taken: " + red.numSteps + " (Span = O(log N))");
@@ -761,6 +863,45 @@ public class EduTrackMain {
         System.out.println("================================================================================");
         System.out.println("[ALL MODULES 1, 2, 3, 4, 5, 6 FULLY VALIDATED UNDER ZERO java.util.* ENGINE CONSTRAINT]");
         System.out.println("================================================================================");
+    }
+
+    private static int parseIntOrDefault(String s, int defaultVal) {
+        if (s == null || s.trim().isEmpty()) return defaultVal;
+        try {
+            return Integer.parseInt(s.trim());
+        } catch (Exception e) {
+            return defaultVal;
+        }
+    }
+
+    private static long parseLongOrDefault(String s, long defaultVal) {
+        if (s == null || s.trim().isEmpty()) return defaultVal;
+        try {
+            return Long.parseLong(s.trim());
+        } catch (Exception e) {
+            return defaultVal;
+        }
+    }
+
+    private static int[] parseCsvInts(String line, int[] defaultValues) {
+        if (line == null || line.trim().isEmpty()) return defaultValues;
+        String[] parts = line.split(",");
+        int[] result = new int[parts.length];
+        for (int i = 0; i < parts.length; i++) {
+            try {
+                result[i] = Integer.parseInt(parts[i].trim());
+            } catch (Exception e) {
+                return defaultValues;
+            }
+        }
+        return result;
+    }
+
+    private static String[] parseCsvStrings(String line, String[] defaultValues) {
+        if (line == null || line.trim().isEmpty()) return defaultValues;
+        String[] parts = line.split(",");
+        for (int i = 0; i < parts.length; i++) parts[i] = parts[i].trim();
+        return parts;
     }
 
     private static void switchDataset(Scanner scanner) {
